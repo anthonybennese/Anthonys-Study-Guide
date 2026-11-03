@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Biology Study Guide</title>
+
+    <style>
+        .flashcard {
+            border: 1px solid black;
+            padding: 10px;
+            width: 300px;
+            margin-top: 10px;
+
+            border-radius: 10px;
+            background-color: #e0f2fe;
+            text-align: center;
+            box-shadow: 0px 4px 8px gray;
+            font-weight: bold;
+            min-height: 100px;
+
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            align-items: center;
+            justify-content: center;
+
+            cursor: pointer;
+            transition: 0.3s;
+            user-select: none;
+        }
+
+        .flashcard-text{
+            font-size: 20px;
+            color: darkblue;
+            overflow-wrap: break-word;
+            width: 100%;
+        }
+
+        .delete-button{
+            background-color: red;
+            color: white;
+            border-radius: 5px;
+            padding: 5px 10px;
+            border: none;
+            cursor: pointer;
+            transition: 0.3s;
+            align-self: center;
+        }
+
+        .delete-button:hover {
+            background-color: darkred;
+            transform: scale(1.05);
+        }
+
+        .card-count {
+            font-weight: bold;
+            color: darkblue;
+        }
+    </style>
+</head>
+<body>
+    <a href="index.html">Back To Study Guides</a>
+
+    <h1>Biology Study Guide</h1>
+
+    <button id="darkModeButton">🌙 Dark Mode</button>
+
+    <h2>Flashcards</h2>
+
+    <p id="cardCount" class = "card-count"> Flashcards: 0</p>
+
+    <input type="text" id="flashcardInput" placeholder="Enter flashcard question">
+    
+    <input type="text" id="answerInput" placeholder="Enter flashcard Answer">
+
+    <button onclick="addFlashcard()">Add Flashcard</button>
+    
+    <div id="flashcardInfo"></div>
+
+    <script>
+
+        document.getElementById("darkModeButton").addEventListener("click", function() {
+           if (document.body.style.backgroundColor === "black"){
+                
+                document.body.style.backgroundColor = "white";
+                document.body.style.color = "black";
+
+                document.getElementById("darkModeButton").textContent = "🌙 Dark Mode"
+
+                localStorage.setItem("theme", "light")
+           }
+           else {
+                document.body.style.backgroundColor = "black";
+                document.body.style.color = "white";
+
+                document.getElementById("darkModeButton").textContent = "☀️ Light Mode"
+
+                localStorage.setItem("theme", "dark")
+           }
+        });
+
+        document.getElementById("answerInput").addEventListener("keypress", function(event) {
+                if (event.key === "Enter") {
+
+                    addFlashcard();
+                }
+            });
+        
+        let flashcardsData = 
+            JSON.parse(localStorage.getItem("flashcards")) || [];
+
+        let theme =
+            localStorage.getItem("theme");
+
+        if (theme === "dark") {
+                document.body.style.backgroundColor = "black";
+                document.body.style.color = "white";
+
+                document.getElementById("darkModeButton").textContent = "☀️ Light Mode";
+
+            }
+                
+
+        for (let flashcard of flashcardsData) {
+            createCard(flashcard.question, flashcard.answer);
+        }
+        
+         function addFlashcard() {
+
+            let question = document.getElementById("flashcardInput").value;
+
+            let answer = document.getElementById("answerInput").value;
+
+            if (question.trim() === ""){
+                alert("Please enter a question!")
+                document.getElementById("flashcardInput").focus();
+                return;
+            }
+
+            if (answer.trim() === ""){
+                alert("Please enter an answer!")
+                document.getElementById("answerInput").focus()
+                return;
+            }
+
+            flashcardsData.push({
+                question: question,
+                answer: answer
+            });
+
+            console.log(flashcardsData);
+
+            localStorage.setItem(
+                "flashcards",
+                JSON.stringify(flashcardsData)
+            );
+
+            createCard(question, answer);
+
+            document.getElementById("flashcardInput").value = "";
+            document.getElementById("answerInput").value = "";
+            document.getElementById("flashcardInput").focus();
+
+         }
+
+
+         function createCard(question, answer) {
+             // Gets the flashcard container from the webpage
+            let flashcards = document.getElementById("flashcardInfo");
+
+            let cardCount = document.getElementById("cardCount")
+            
+            let card = document.createElement("div");
+
+            card.className = "flashcard"
+
+            let cardText = document.createElement("div");
+            cardText.className = "flashcard-text"
+
+            cardText.textContent = question;
+
+            let deleteButton = document.createElement("button");
+            deleteButton.className = "delete-button"
+
+            deleteButton.textContent = "🗑️ Delete Card";
+
+
+            //changes the cards size after you hover over it
+            card.addEventListener('mouseover', function(){
+                    card.style.transform = "scale(1.05)";
+                });
+
+            //Changes the box size back to normal after your mouse stops hovering over it
+            card.addEventListener("mouseout", function() {
+                    card.style.transform = "scale(1)";
+                        })
+                
+            card.addEventListener("click", function() {
+                if (cardText.textContent === question) {
+                    cardText.textContent = answer;
+                    cardText.style.color = "darkgreen"
+                    } else {
+                    cardText.textContent = question;
+                    cardText.style.color = "darkblue"
+                    }
+
+                })
+            deleteButton.addEventListener("click", function(event) {
+                    event.stopPropagation();
+
+                    let index = Array.from(flashcards.children).indexOf(card);
+                    if (index !== -1) {
+                        flashcardsData.splice(index, 1);
+                        
+                        localStorage.setItem(
+                            "flashcards",
+                            JSON.stringify(flashcardsData)
+                        );
+                    }
+                    console.log("Deleting card at index:", index)
+                    
+
+                    card.remove();
+                    cardCount.textContent = "Flashcards: " + flashcards.children.length;
+                });
+
+                
+            card.appendChild(cardText)
+            card.appendChild(deleteButton)
+                    
+            // Adds the flashcard to the page
+            flashcards.appendChild(card);
+
+            cardCount.textContent = "Flashcards: " + flashcards.children.length;
+         }
+    </script>
+</body>
+</html>
