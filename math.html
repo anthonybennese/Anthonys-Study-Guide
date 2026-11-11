@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Math Study Guide</title>
+
+    <style>
+        .flashcard {
+            border: 1px solid black;
+            padding: 10px;
+            width: 300px;
+            margin-top: 10px;
+
+            border-radius: 10px;
+            background-color: #e0f2fe;
+            text-align: center;
+            box-shadow: 0px 4px 8px gray;
+            font-weight: bold;
+            min-height: 100px;
+
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            align-items: center;
+            justify-content: center;
+
+            cursor: pointer;
+            transition: 0.3s;
+            user-select: none;
+        }
+
+        .flashcard-text{
+            font-size: 20px;
+            color: darkblue;
+            overflow-wrap: break-word;
+            width: 100%;
+        }
+
+        .edit-button {
+            background-color: orange;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 5px 10px;
+            cursor: pointer;
+            margin-right: 5px;
+        }
+
+        .delete-button{
+            background-color: red;
+            color: white;
+            border-radius: 5px;
+            padding: 5px 10px;
+            border: none;
+            cursor: pointer;
+            transition: 0.3s;
+            align-self: center;
+        }
+
+        .delete-button:hover {
+            background-color: darkred;
+            transform: scale(1.05);
+        }
+
+        .card-count {
+            font-weight: bold;
+            color: darkblue;
+        }
+
+        .button-container{
+            display: flex;
+            gap: 5px;
+            justify-content: center;
+        }
+
+        .flashcard input {
+            width: 90%;
+            padding: 8px;
+            margin-bottom: 8px;
+            border-radius: 5px;
+            border: 1px solid gray;
+        }
+
+        .flashcard-text button {
+            background-color: green;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        body.dark-mode {
+            background-color: #121212;
+            color: white;
+        }
+
+        body.dark-mode .flashcard {
+            background-color: #2d2d2d;
+            border-color: #555;
+            box-shadow: 0px 4px 8px #111;
+        }
+
+        body.dark-mode .flashcard-text {
+            color: lightblue;
+        }
+
+        body.dark-mode .card-count {
+            color: lightblue;
+        }
+
+        body.dark-mode a {
+            color: #90caf9;
+        }
+
+        .flashcard-text {
+            color: darkblue;
+        }
+        .flashcard-text.show-answer {
+            color: darkgreen;
+        }
+
+        body.dark-mode .flashcard-text.show-answer {
+            color: lightgreen;
+        }
+
+    </style>
+
+</head>
+<body>
+    <a href="index.html">Back To Study Guides</a>
+
+    <h1>Math Study Guide</h1>
+    
+
+    <button id="darkModeButton">🌙 Dark Mode</button> <button id="quizModeButton">🧠 Quiz Mode</button>
+
+    <div id="quizArea"></div>
+
+    <div id = "quizStats">
+        <h3>📊 Quiz Statistics</h3>
+        <p id="questionsSeen">Questions Seen: 0</p>
+        <p id="answersRevealed">Answers Revealed: 0</p>
+        <p id="correctAnswers">Correct Answers: 0</p>
+        <p id="incorrectAnswers">Incorrect Answers: 0</p>
+        <p id="accuracy">Accuracy: 0%</p>
+        <button id="resetStatsButton">🔄 Reset Statistics</button>
+    </div>
+
+    <h2>Flashcards</h2>
+    <button id="shuffleButton">🔀 Shuffle Flashcards</button>
+
+    <p id="cardCount" class = "card-count"> Flashcards: 0</p>
+
+    <input type="text" id="flashcardInput" placeholder="Enter flashcard question">
+    
+    <input type="text" id="answerInput" placeholder="Enter flashcard Answer">
+
+    <button onclick="addFlashcard()">Add Flashcard</button>
+    
+    <div id="flashcardInfo"></div>
+
+    <script>
+
+        let storageKey = "mathFlashcards"
+        let questionsSeenKey = "mathQuestionsSeen";
+        let answersRevealedKey = "mathAnswersRevealed";
+
+        let correctAnswersKey = "mathCorrectAnswers"
+        let incorrectAnswersKey = "mathIncorrectAnswers";
+
+        let questionsSeen = Number(localStorage.getItem(questionsSeenKey)) || 0;
+        let answersRevealed = Number(localStorage.getItem(answersRevealedKey)) || 0;
+        
+        let correctAnswers = Number(localStorage.getItem(correctAnswersKey)) || 0;
+        let incorrectAnswers = Number(localStorage.getItem(incorrectAnswersKey)) || 0;
+
+        function updateQuizStats(){
+            document.getElementById("questionsSeen").textContent =
+                "Questions Seen: " + questionsSeen;
+
+            document.getElementById("answersRevealed").textContent =
+                "Answers Revealed: " + answersRevealed;
+
+            document.getElementById("correctAnswers").textContent =
+                "Correct Answers: " + correctAnswers;
+
+            document.getElementById("incorrectAnswers").textContent =
+                "Incorrect Answers: " + incorrectAnswers;
+
+            let totalAnswers = correctAnswers + incorrectAnswers;
+
+            let accuracy = 0;
+
+            if (totalAnswers > 0) {
+                accuracy = Math.round((correctAnswers / totalAnswers) * 100);
+            }
+
+            document.getElementById("accuracy").textContent =
+                "Accuracy: " + accuracy + "%";
+        }
+
+        updateQuizStats();
+
+        document.getElementById("resetStatsButton").addEventListener("click", function() {
+
+            questionsSeen = 0;
+            answersRevealed = 0;
+            correctAnswers = 0;
+            incorrectAnswers = 0;
+
+            localStorage.setItem(questionsSeenKey, questionsSeen);
+            localStorage.setItem(answersRevealedKey, answersRevealed);
+            localStorage.setItem(correctAnswersKey, correctAnswers);
+            localStorage.setItem(incorrectAnswersKey, incorrectAnswers);
+
+            updateQuizStats();
+        })
+        
+
+        let questionPool = [];
+
+        function refillQuestionPool() {
+            questionPool = [...flashcardsData];
+
+        }
+
+        document.getElementById("quizModeButton").addEventListener("click", function(){
+            let quizArea = document.getElementById("quizArea");
+
+            if (flashcardsData.length === 0) {
+                            quizArea.textContent = "No Flashcards Available!";
+                            return;
+                        }
+
+            if (questionPool.length === 0) {
+                refillQuestionPool();
+            }
+
+            let randomIndex = Math.floor(
+                        Math.random() * questionPool.length
+                    )
+
+            let randomCard = questionPool[randomIndex];
+            questionPool.splice(randomIndex, 1);
+
+            questionsSeen++;
+
+            localStorage.setItem(questionsSeenKey, questionsSeen);
+            
+            updateQuizStats();
+
+
+            quizArea.innerHTML = 
+                "<h3>Quiz Question</h3>" + 
+                "<p>" + randomCard.question + "</p>" +
+                "<button id = 'showAnswerButton' style='margin-right:5px;'>Show Answer</button>" +
+                "<button id = 'nextQuestionButton'>Next Question</button>";
+
+            document.getElementById("showAnswerButton").addEventListener("click", function() {
+
+               let answerText = document.createElement("p");
+
+               answerText.innerHTML =
+                    "<strong>Answer:</strong> " +
+                    randomCard.answer;
+                quizArea.appendChild(answerText);
+
+                let correctButton = document.createElement("button");
+                correctButton.textContent = "✅ Got It Right";
+                correctButton.id = "correctButton";
+
+                let incorrectButton = document.createElement("button");
+                incorrectButton.textContent = "❌ Got It Wrong";
+                incorrectButton.id = "incorrectButton";
+
+                quizArea.appendChild(correctButton);
+                quizArea.appendChild(incorrectButton);
+
+                correctButton.addEventListener("click", function() {
+                correctAnswers++;
+
+                localStorage.setItem(correctAnswersKey, correctAnswers);
+
+                updateQuizStats();
+
+                correctButton.disabled = true;
+                incorrectButton.disabled = true;
+            });
+
+            incorrectButton.addEventListener("click", function() {
+                incorrectAnswers++;
+
+                localStorage.setItem(incorrectAnswersKey, incorrectAnswers);
+
+                updateQuizStats();
+
+                correctButton.disabled = true;
+                incorrectButton.disabled = true;
+            });
+
+                this.disabled = true;
+
+                answersRevealed++;
+
+                localStorage.setItem(answersRevealedKey, answersRevealed);
+
+                updateQuizStats();
+                
+
+            });
+
+            document.getElementById("nextQuestionButton").addEventListener("click", function(){
+                
+                document.getElementById("quizModeButton").click();
+
+            });
+
+           
+            
+        });
+
+        document.getElementById("darkModeButton").addEventListener("click", function() {
+           document.body.classList.toggle("dark-mode");
+
+           let isDark = document.body.classList.contains("dark-mode");
+
+           localStorage.setItem("theme", isDark ? "dark" : "light");
+
+           this.textContent = isDark ? "☀️ Light Mode" : "🌙 Dark Mode"
+        });
+
+        document.getElementById("answerInput").addEventListener("keypress", function(event) {
+                if (event.key === "Enter") {
+
+                    addFlashcard();
+                }
+            });
+        
+        let flashcardsData = 
+            JSON.parse(localStorage.getItem(storageKey)) || [];
+
+        document.getElementById("shuffleButton").addEventListener("click", function() {
+
+            let flashcards = document.getElementById("flashcardInfo");
+
+            if (flashcardsData.length < 2) {
+                alert("You need at least 2 flashcards to shuffle!");
+                return;
+            }
+
+            for (let i = flashcardsData.length - 1; i>0; i--) {
+                let randomIndex = Math.floor(Math.random() * (i+1));
+
+                [flashcardsData[i], flashcardsData[randomIndex]] =
+                [flashcardsData[randomIndex], flashcardsData[i]];
+            }
+
+            localStorage.setItem(storageKey, JSON.stringify(flashcardsData));
+
+            flashcards.replaceChildren();
+
+            for (let flashcard of flashcardsData) {
+                createCard(flashcard.question, flashcard.answer);
+            }
+
+            questionPool = []
+            
+        })
+
+        let theme =
+            localStorage.getItem("theme");
+
+        if (theme === "dark") {
+                document.body.classList.add("dark-mode");
+
+                document.getElementById("darkModeButton").textContent = "☀️ Light Mode";
+
+            }
+                
+
+        for (let flashcard of flashcardsData) {
+            createCard(flashcard.question, flashcard.answer);
+        }
+        
+         function addFlashcard() {
+
+            let question = document.getElementById("flashcardInput").value;
+
+            let answer = document.getElementById("answerInput").value;
+
+            if (question.trim() === ""){
+                alert("Please enter a question!")
+                document.getElementById("flashcardInput").focus();
+                return;
+            }
+
+            if (answer.trim() === ""){
+                alert("Please enter an answer!")
+                document.getElementById("answerInput").focus()
+                return;
+            }
+
+            flashcardsData.push({
+                question: question,
+                answer: answer
+            });
+
+            questionPool = [];
+
+            console.log(flashcardsData);
+
+            localStorage.setItem(
+                storageKey,
+                JSON.stringify(flashcardsData)
+            );
+
+            createCard(question, answer);
+
+            document.getElementById("flashcardInput").value = "";
+            document.getElementById("answerInput").value = "";
+            document.getElementById("flashcardInput").focus();
+
+         }
+
+
+         function createCard(question, answer) {
+             // Gets the flashcard container from the webpage
+            let flashcards = document.getElementById("flashcardInfo");
+
+            let cardCount = document.getElementById("cardCount")
+            
+            let card = document.createElement("div");
+
+            card.className = "flashcard"
+
+            let cardText = document.createElement("div");
+            cardText.className = "flashcard-text"
+
+            cardText.textContent = question;
+
+            let editButton = document.createElement("button");
+
+            editButton.textContent = "✏️ Edit";
+
+            editButton.className = "edit-button";
+
+            editButton.addEventListener("click", function(event) {
+                event.stopPropagation();
+
+                let questionInput = document.createElement("input");
+                questionInput.value = question;
+
+                let answerInput = document.createElement("input");
+                    answerInput.value = answer;
+                    
+                let saveButton = document.createElement("button");
+                    saveButton.textContent = "💾 Save"
+
+                    saveButton.addEventListener("click", function(event) {
+                        event.stopPropagation();
+
+                        let newQuestion = questionInput.value.trim();
+                        let newAnswer = answerInput.value.trim();
+
+                        if (newQuestion === "" || newAnswer === ""){
+                            alert("Question and answer cannot be empty!");
+                            return;
+                        }
+
+                        let index = Array.from(flashcards.children).indexOf(card);
+
+                        if (index !== -1) {
+                            flashcardsData[index].question = newQuestion;
+                            flashcardsData[index].answer = newAnswer;
+
+                            localStorage.setItem(
+                                storageKey,
+                                JSON.stringify(flashcardsData)
+                            );
+                        }
+
+                        question = newQuestion;
+                        answer = newAnswer;
+
+                        cardText.textContent = question;
+                        cardText.classList.remove("show-answer");
+
+                        editButton.disabled = false;
+                        questionPool = [];
+                    })
+                
+
+                cardText.replaceChildren(
+                    questionInput,
+                    answerInput,
+                    saveButton
+                );
+
+                editButton.disabled = true;
+                
+                
+            })
+
+            let deleteButton = document.createElement("button");
+            deleteButton.className = "delete-button"
+
+            deleteButton.textContent = "🗑️ Delete Card";
+
+
+            //changes the cards size after you hover over it
+            card.addEventListener('mouseover', function(){
+                    card.style.transform = "scale(1.05)";
+                });
+
+            //Changes the box size back to normal after your mouse stops hovering over it
+            card.addEventListener("mouseout", function() {
+                    card.style.transform = "scale(1)";
+                        })
+                
+            card.addEventListener("click", function() {
+
+                if (editButton.disabled) {
+                    return;
+                 }
+
+                if (cardText.textContent === question) {
+                    cardText.textContent = answer;
+                    cardText.classList.add("show-answer")
+                    } else {
+                    cardText.textContent = question;
+                    cardText.classList.remove("show-answer")
+                    }
+
+               
+
+                })
+            deleteButton.addEventListener("click", function(event) {
+                    event.stopPropagation();
+
+                    let index = Array.from(flashcards.children).indexOf(card);
+                    if (index !== -1) {
+                        flashcardsData.splice(index, 1);
+                        
+                        localStorage.setItem(
+                            storageKey,
+                            JSON.stringify(flashcardsData)
+                        );
+                    }
+                    console.log("Deleting card at index:", index)
+                    
+
+                    card.remove();
+                    cardCount.textContent = "Flashcards: " + flashcards.children.length;
+
+                    questionPool = [];
+                });
+
+                
+            let buttonContainer = document.createElement("div")
+
+            buttonContainer.className = "button-container";
+
+            buttonContainer.appendChild(editButton);
+            buttonContainer.appendChild(deleteButton);
+
+            card.appendChild(cardText);
+            card.appendChild(buttonContainer)
+                    
+            // Adds the flashcard to the page
+            flashcards.appendChild(card);
+
+            cardCount.textContent = "Flashcards: " + flashcards.children.length;
+         }
+    </script>
+</body>
+</html>

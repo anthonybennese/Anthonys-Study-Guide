@@ -91,18 +91,65 @@
             cursor: pointer;
         }
 
+        body.dark-mode {
+            background-color: #121212;
+            color: white;
+        }
+
+        body.dark-mode .flashcard {
+            background-color: #2d2d2d;
+            border-color: #555;
+            box-shadow: 0px 4px 8px #111;
+        }
+
+        body.dark-mode .flashcard-text {
+            color: lightblue;
+        }
+
+        body.dark-mode .card-count {
+            color: lightblue;
+        }
+
+        body.dark-mode a {
+            color: #90caf9;
+        }
+
+        .flashcard-text {
+            color: darkblue;
+        }
+        .flashcard-text.show-answer {
+            color: darkgreen;
+        }
+
+        body.dark-mode .flashcard-text.show-answer {
+            color: lightgreen;
+        }
+
     </style>
+
 </head>
 <body>
     <a href="index.html">Back To Study Guides</a>
 
     <h1>Biology Study Guide</h1>
+    
 
     <button id="darkModeButton">🌙 Dark Mode</button> <button id="quizModeButton">🧠 Quiz Mode</button>
 
     <div id="quizArea"></div>
 
+    <div id = "quizStats">
+        <h3>📊 Quiz Statistics</h3>
+        <p id="questionsSeen">Questions Seen: 0</p>
+        <p id="answersRevealed">Answers Revealed: 0</p>
+        <p id="correctAnswers">Correct Answers: 0</p>
+        <p id="incorrectAnswers">Incorrect Answers: 0</p>
+        <p id="accuracy">Accuracy: 0%</p>
+        <button id="resetStatsButton">🔄 Reset Statistics</button>
+    </div>
+
     <h2>Flashcards</h2>
+    <button id="shuffleButton">🔀 Shuffle Flashcards</button>
 
     <p id="cardCount" class = "card-count"> Flashcards: 0</p>
 
@@ -116,6 +163,62 @@
 
     <script>
 
+        let storageKey = "biologyFlashcards"
+        let questionsSeenKey = "biologyQuestionsSeen";
+        let answersRevealedKey = "biologyAnswersRevealed";
+
+        let correctAnswersKey = "biologyCorrectAnswers";
+        let incorrectAnswersKey = "biologyIncorrectAnswers"
+
+        let questionsSeen = Number(localStorage.getItem(questionsSeenKey)) || 0;
+        let answersRevealed = Number(localStorage.getItem(answersRevealedKey)) || 0;
+
+        let correctAnswers = Number(localStorage.getItem(correctAnswersKey)) || 0;
+        let incorrectAnswers = Number(localStorage.getItem(incorrectAnswersKey)) || 0;
+
+        function updateQuizStats(){
+            document.getElementById("questionsSeen").textContent =
+                "Questions Seen: " + questionsSeen;
+
+            document.getElementById("answersRevealed").textContent =
+                "Answers Revealed: " + answersRevealed;
+
+            document.getElementById("correctAnswers").textContent =
+                "Correct Answers: " + correctAnswers;
+
+            document.getElementById("incorrectAnswers").textContent =
+                "Incorrect Answers: " + incorrectAnswers;
+            
+            let totalAnswers = correctAnswers + incorrectAnswers;
+
+            let accuracy = 0;
+
+            if (totalAnswers > 0) {
+                accuracy = Math.round((correctAnswers / totalAnswers) * 100);
+            }
+
+            document.getElementById("accuracy").textContent =
+                "Accuracy: " + accuracy + "%"
+
+        }
+
+        updateQuizStats();
+
+        document.getElementById("resetStatsButton").addEventListener("click", function() {
+
+            questionsSeen = 0;
+            answersRevealed = 0;
+
+            correctAnswers = 0;
+            incorrectAnswers = 0;
+
+            localStorage.setItem(questionsSeenKey, questionsSeen);
+            localStorage.setItem(answersRevealedKey, answersRevealed);
+
+            localStorage.setItem(correctAnswersKey,correctAnswers)
+            localStorage.setItem(incorrectAnswersKey, incorrectAnswers)
+            updateQuizStats();
+        })
         
 
         let questionPool = [];
@@ -144,6 +247,12 @@
             let randomCard = questionPool[randomIndex];
             questionPool.splice(randomIndex, 1);
 
+            questionsSeen++;
+
+            localStorage.setItem(questionsSeenKey, questionsSeen);
+            
+            updateQuizStats();
+
 
             quizArea.innerHTML = 
                 "<h3>Quiz Question</h3>" + 
@@ -160,7 +269,47 @@
                     randomCard.answer;
                 quizArea.appendChild(answerText);
 
+                let correctButton = document.createElement("button");
+                correctButton.textContent = "✅ Got It Right"
+                correctButton.id = "correctButton";
+
+                let incorrectButton = document.createElement("button");
+                incorrectButton.textContent = "❌ Got It Wrong";
+                incorrectButton.id = "incorrectButton";
+                
+                quizArea.appendChild(correctButton);
+                quizArea.appendChild(incorrectButton);
+
+                correctButton.addEventListener("click", function() {
+                    correctAnswers++;
+
+                    localStorage.setItem(correctAnswersKey, correctAnswers);
+
+                    updateQuizStats()
+
+                    correctButton.disabled = true;
+                    incorrectButton.disabled = true;
+                });
+
+                incorrectButton.addEventListener("click", function() {
+                    incorrectAnswers++;
+
+                    localStorage.setItem(incorrectAnswersKey, incorrectAnswers)
+
+                    updateQuizStats()
+
+                    correctButton.disabled = true;
+                    incorrectButton.disabled = true;
+                    
+                })
+
                 this.disabled = true;
+
+                answersRevealed++;
+
+                localStorage.setItem(answersRevealedKey, answersRevealed);
+
+                updateQuizStats();
                 
 
             });
@@ -176,23 +325,13 @@
         });
 
         document.getElementById("darkModeButton").addEventListener("click", function() {
-           if (document.body.style.backgroundColor === "black"){
-                
-                document.body.style.backgroundColor = "white";
-                document.body.style.color = "black";
+           document.body.classList.toggle("dark-mode");
 
-                document.getElementById("darkModeButton").textContent = "🌙 Dark Mode"
+           let isDark = document.body.classList.contains("dark-mode");
 
-                localStorage.setItem("theme", "light")
-           }
-           else {
-                document.body.style.backgroundColor = "black";
-                document.body.style.color = "white";
+           localStorage.setItem("theme", isDark ? "dark" : "light");
 
-                document.getElementById("darkModeButton").textContent = "☀️ Light Mode"
-
-                localStorage.setItem("theme", "dark")
-           }
+           this.textContent = isDark ? "☀️ Light Mode" : "🌙 Dark Mode"
         });
 
         document.getElementById("answerInput").addEventListener("keypress", function(event) {
@@ -203,14 +342,41 @@
             });
         
         let flashcardsData = 
-            JSON.parse(localStorage.getItem("flashcards")) || [];
+            JSON.parse(localStorage.getItem(storageKey)) || [];
+
+        document.getElementById("shuffleButton").addEventListener("click", function() {
+
+            let flashcards = document.getElementById("flashcardInfo");
+
+            if (flashcardsData.length < 2) {
+                alert("You need at least 2 flashcards to shuffle!");
+                return;
+            }
+
+            for (let i = flashcardsData.length - 1; i>0; i--) {
+                let randomIndex = Math.floor(Math.random() * (i+1));
+
+                [flashcardsData[i], flashcardsData[randomIndex]] =
+                [flashcardsData[randomIndex], flashcardsData[i]];
+            }
+
+            localStorage.setItem(storageKey, JSON.stringify(flashcardsData));
+
+            flashcards.replaceChildren();
+
+            for (let flashcard of flashcardsData) {
+                createCard(flashcard.question, flashcard.answer);
+            }
+
+            questionPool = []
+            
+        })
 
         let theme =
             localStorage.getItem("theme");
 
         if (theme === "dark") {
-                document.body.style.backgroundColor = "black";
-                document.body.style.color = "white";
+                document.body.classList.add("dark-mode");
 
                 document.getElementById("darkModeButton").textContent = "☀️ Light Mode";
 
@@ -249,7 +415,7 @@
             console.log(flashcardsData);
 
             localStorage.setItem(
-                "flashcards",
+                storageKey,
                 JSON.stringify(flashcardsData)
             );
 
@@ -313,7 +479,7 @@
                             flashcardsData[index].answer = newAnswer;
 
                             localStorage.setItem(
-                                "flashcards",
+                                storageKey,
                                 JSON.stringify(flashcardsData)
                             );
                         }
@@ -322,7 +488,7 @@
                         answer = newAnswer;
 
                         cardText.textContent = question;
-                        cardText.style.color = "darkblue";
+                        cardText.classList.remove("show-answer");
 
                         editButton.disabled = false;
                         questionPool = [];
@@ -359,15 +525,15 @@
             card.addEventListener("click", function() {
 
                 if (editButton.disabled) {
-                                    return;
-                                }
+                    return;
+                 }
 
                 if (cardText.textContent === question) {
                     cardText.textContent = answer;
-                    cardText.style.color = "darkgreen"
+                    cardText.classList.add("show-answer")
                     } else {
                     cardText.textContent = question;
-                    cardText.style.color = "darkblue"
+                    cardText.classList.remove("show-answer")
                     }
 
                
@@ -381,7 +547,7 @@
                         flashcardsData.splice(index, 1);
                         
                         localStorage.setItem(
-                            "flashcards",
+                            storageKey,
                             JSON.stringify(flashcardsData)
                         );
                     }
